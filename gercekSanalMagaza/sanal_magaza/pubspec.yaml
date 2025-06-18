@@ -1,0 +1,33 @@
+name: sanal_magaza
+description: A new Flutter project.
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.2
+  image_picker: ^1.0.4
+  intl: ^0.18.1
+  barcode_scan2: ^4.5.1
+  shared_preferences: ^2.2.3
+  http: ^1.1.0
+  device_info_plus: ^9.1.2
+  xml: ^6.3.0
+  flutter_secure_storage: ^9.2.4
+  get: ^4.6.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/
