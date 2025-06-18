@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
 import 'package:sanal_magaza/controller/Ctanim.dart';
+import 'package:sanal_magaza/models/urun_model.dart';
 import 'package:sanal_magaza/pages/urun_detay_sayfasi.dart';
 import 'package:sanal_magaza/controller/sharedDB.dart';
 import 'package:sanal_magaza/pages/urun_listesi_sayfasi.dart';
@@ -53,7 +54,14 @@ class _LoginState extends State<Login> {
                     donenAPIler = await makeSoapRequest(lisans.text);
                     if (donenAPIler.length > 1) {
                       await shared.ipKaydet(donenAPIler[1]);
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => UrunListesiSayfasi(),));
+                      //
+                      var test = await UrunGetir();
+                      //
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => UrunListesiSayfasi(),
+                          ));
                     }
                   }
                 })),
@@ -183,46 +191,4 @@ List<String> parseSoapResponse(String soapResponse) {
 Future<void> lisansNumarasiKaydet(String lisans) async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   await prefs.setString('lisansNo', lisans);
-}
-
-Future<List<String>> UrunListele(String lisansNumarasi) async {
-  var url = Uri.parse('http://setuppro.opakyazilim.net/Service1.asmx');
-  var headers = {
-    'Content-Type': 'text/xml; charset=utf-8',
-    'SOAPAction': 'http://tempuri.org/GetirAPKServisIP'
-  };
-
-  var body = """<?xml version="1.0" encoding="utf-8"?>
-<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-  <soap:Header>
-    <AuthHeader xmlns="http://tempuri.org/">
-      <ApiKey>${</ApiKey>
-    </AuthHeader> 
-  </soap:Header>
-  <soap:Body>
-    <GetirTrendYolSiparis xmlns="http://tempuri.org/">
-      <Status>string</Status>
-    </GetirTrendYolSiparis>
-  </soap:Body>
-</soap:Envelope>""";
-
-  try {
-    var response = await http.post(
-      url,
-      headers: headers,
-      body: body,
-    );
-
-    if (response.statusCode == 200) {
-      var rawXmlResponse = response.body;
-      var tt = parseSoapResponse(response.body);
-      return tt;
-    } else {
-      print('SOAP isteği başarısız: ${response.statusCode}');
-      return [];
-    }
-  } catch (e) {
-    print('Hata: $e');
-    return [];
-  }
 }
