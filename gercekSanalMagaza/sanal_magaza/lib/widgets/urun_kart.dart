@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:sanal_magaza/models/urun_model.dart'; 
 
 class UrunKart extends StatefulWidget {
-  final Urun urun;
+  final UrunModel urun;
   final ValueChanged<bool?> onTiklandi;
   final bool seciliMi;
 
@@ -43,27 +43,7 @@ class _UrunKartState extends State<UrunKart> {
                 border: Border.all(color: Colors.grey.shade300, width: 1.0), 
               ),
               clipBehavior: Clip.antiAlias, 
-              child: widget.urun.resimYolu != null && widget.urun.resimYolu!.isNotEmpty
-                  ? Image.asset(
-                      widget.urun.resimYolu!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.image_not_supported, color: Colors.grey, size: 30),
-                              Text(
-                                'Resim Yok',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(color: Colors.grey, fontSize: 10),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    )
-                  : const Center(
+              child:  Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -94,14 +74,14 @@ class _UrunKartState extends State<UrunKart> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Stok No: ${widget.urun.stokNumarasi}',
+                    'Stok No: ${widget.urun.barcode}',
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.grey[700],
                     ),
                   ),
                   Text(
-                    'Adet: ${widget.urun.adet}',
+                    'Adet: ${widget.urun.amount}',
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.grey[700],

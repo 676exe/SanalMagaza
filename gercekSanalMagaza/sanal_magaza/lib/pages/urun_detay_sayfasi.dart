@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sanal_magaza/models/urun_model.dart';
 
 class UrunDetaySayfasi extends StatelessWidget {
-  final Urun urun;
+  final UrunModel urun;
 
   const UrunDetaySayfasi({super.key, required this.urun});
 
@@ -17,26 +17,7 @@ class UrunDetaySayfasi extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (urun.resimYolu != null)
-              Center(
-                child: Image.asset(
-                  urun.resimYolu!,
-                  width: 200,
-                  height: 200,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return const SizedBox(
-                      width: 200,
-                      height: 200,
-                      child: Center(
-                        child: Text('Resim Yolu Yok', textAlign: TextAlign.center),
-                      ),
-                    );
-                  },
-                ),
-              )
-            else
-              const SizedBox(
+            const SizedBox(
                 width: 200,
                 height: 200,
                 child: Center(
