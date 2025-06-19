@@ -5,7 +5,7 @@ import 'package:sanal_magaza/models/siparis_kalemi.dart';
 import 'package:sanal_magaza/services/urun_servisi.dart';
 
 class UrunYonetimSayfasi extends StatefulWidget {
-  final List<Urun> seciliUrunler;
+  final List<UrunModel> seciliUrunler;
 
   const UrunYonetimSayfasi({
     super.key,
@@ -19,7 +19,7 @@ class UrunYonetimSayfasi extends StatefulWidget {
 class _UrunYonetimSayfasiState extends State<UrunYonetimSayfasi> {
   final UrunServisi _urunServisi = UrunServisi();
   
-  Map<String, List<SiparisKalemi>> _urunTrendyolSiparisleri = {};
+  Map<int, List<OrderListModel>> _urunTrendyolSiparisleri = {};
   bool _yukleniyor = true;
 
   @override
@@ -34,7 +34,7 @@ class _UrunYonetimSayfasiState extends State<UrunYonetimSayfasi> {
     });
     try {
       for (var urun in widget.seciliUrunler) {
-        final siparisler = await _urunServisi.urunTrendyolSiparisleriniGetir(urun.id);
+        final siparisler = urun.orderList;
         setState(() {
           _urunTrendyolSiparisleri[urun.id] = siparisler;
         });
@@ -52,8 +52,8 @@ class _UrunYonetimSayfasiState extends State<UrunYonetimSayfasi> {
   }
 
   
-  Future<void> _eslestirSiparisKalemi(String urunId, String siparisKalemiId) async {
-    final success = await _urunServisi.eslestirSiparisKalemi(urunId, siparisKalemiId);
+  Future<void> _eslestirSiparisKalemi(int urunId, int siparisKalemiId,int miktar, bool onayla) async {
+    final success = await SiparisGonder(urunId, siparisKalemiId,miktar,onayla);
     if (success) {
       await _trendyolSiparisleriniYukle(); 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -69,7 +69,7 @@ class _UrunYonetimSayfasiState extends State<UrunYonetimSayfasi> {
   }
 
   
-  Future<void> _iptalEtSiparisKalemi(String urunId, String siparisKalemiId) async {
+  Future<void> _iptalEtSiparisKalemi(int urunId, int siparisKalemiId) async {
     await _urunServisi.iptalEtSiparisKalemi(urunId, siparisKalemiId);
     await _trendyolSiparisleriniYukle(); 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -78,12 +78,12 @@ class _UrunYonetimSayfasiState extends State<UrunYonetimSayfasi> {
   }
 
   
-  Future<void> _tumunuEsle(String urunId) async {
+  Future<void> _tumunuEsle(int urunId) async {
     final siparisler = _urunTrendyolSiparisleri[urunId];
     if (siparisler != null) {
       for (var siparisKalemi in siparisler) {
         if (siparisKalemi.durum == 'Bekliyor') { 
-          await _eslestirSiparisKalemi(urunId, siparisKalemi.id);
+          //await _eslestirSiparisKalemi(urunId, siparisKalemi.id, true);
         }
       }
       ScaffoldMessenger.of(context).showSnackBar(
@@ -94,7 +94,7 @@ class _UrunYonetimSayfasiState extends State<UrunYonetimSayfasi> {
   }
 
   
-  bool _hasPendingSiparisKalemleri(String urunId) {
+  bool _hasPendingSiparisKalemleri(int urunId) {
     final siparisler = _urunTrendyolSiparisleri[urunId];
     if (siparisler == null || siparisler.isEmpty) {
       return false;
@@ -133,9 +133,10 @@ class _UrunYonetimSayfasiState extends State<UrunYonetimSayfasi> {
         return Colors.grey.shade800;
     }
   }
-
   @override
   Widget build(BuildContext context) {
+    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Trendyol Sipariş Yönetimi'), 
@@ -221,7 +222,7 @@ class _UrunYonetimSayfasiState extends State<UrunYonetimSayfasi> {
                             else
                               ...siparisKalemleri.map((siparisKalemi) {
                                 
-                                final bool isActive = siparisKalemi.durum == 'Bekliyor';
+                                final bool isActive = siparisKalemi.durum == 'ReadyToShip';
 
                                 return Padding(
                                   padding: const EdgeInsets.symmetric(vertical: 6.0),
@@ -256,7 +257,7 @@ class _UrunYonetimSayfasiState extends State<UrunYonetimSayfasi> {
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
                                               Text(
-                                                siparisKalemi.platform, 
+                                                '', 
                                                 style: const TextStyle(
                                                   fontWeight: FontWeight.bold,
                                                   fontSize: 16,
@@ -268,7 +269,7 @@ class _UrunYonetimSayfasiState extends State<UrunYonetimSayfasi> {
                                                 style: const TextStyle(fontSize: 14, color: Colors.black54),
                                               ),
                                               Text(
-                                                DateFormat('d/M/yyyy HH:mm').format(siparisKalemi.tarihSaat),
+                                                siparisKalemi.tarihSaat.toString(),
                                                 style: const TextStyle(fontSize: 12, color: Colors.black45),
                                               ),
                                             ],
@@ -285,7 +286,7 @@ class _UrunYonetimSayfasiState extends State<UrunYonetimSayfasi> {
                                             size: 28,
                                           ),
                                           onPressed: isActive
-                                              ? () => _eslestirSiparisKalemi(urun.id, siparisKalemi.id)
+                                              ? () => _eslestirSiparisKalemi(urun.id, siparisKalemi.id,int.parse( siparisKalemi.talepEdilenAdet.toString()), true)
                                               : null, 
                                           tooltip: 'Eşleştir',
                                         ),

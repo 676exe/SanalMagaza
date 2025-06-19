@@ -7,21 +7,6 @@ import 'package:xml/xml.dart' as xml;
 import 'package:http/http.dart' as http;
 
 
-class Urun {
-  final String id;
-  final String ad;
-  final String stokNumarasi;
-  final int adet;
-  final String? resimYolu;
-
-  Urun({
-    required this.id,
-    required this.ad,
-    required this.stokNumarasi,
-    required this.adet,
-    this.resimYolu,
-  });
-}
 
 List<UrunModel> urunModelFromJson(String str) =>
     List<UrunModel>.from(json.decode(str).map((x) => UrunModel.fromJson(x)));
@@ -30,52 +15,84 @@ String urunModelToJson(List<UrunModel> data) =>
     json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
 
 class UrunModel {
-  int lineId;
-  int quantity;
+  int id;
+  int adet;
   int productCode;
   double amount;
   double price;
   String barcode;
-  String productName;
-  int orderId;
-  List<OrderList> orderList;
+  String ad;
+  int stokNumarasi;
+  List<OrderListModel> orderList;
 
   UrunModel({
-    required this.lineId,
-    required this.quantity,
+    required this.id,
+    required this.adet,
     required this.productCode,
     required this.amount,
     required this.price,
     required this.barcode,
-    required this.productName,
-    required this.orderId,
+    required this.ad,
+    required this.stokNumarasi,
     required this.orderList,
   });
 
   factory UrunModel.fromJson(Map<String, dynamic> json) => UrunModel(
-        lineId: json["lineId"],
-        quantity: json["quantity"],
+        id: json["lineId"],
+        adet: json["quantity"],
         productCode: json["productCode"],
         amount: json["amount"]?.toDouble(),
         price: json["price"]?.toDouble(),
         barcode: json["barcode"],
-        productName: json["productName"],
-        orderId: json["orderId"],
-        orderList: List<OrderList>.from(
-            json["orderList"].map((x) => OrderList.fromJson(x))),
+        ad: json["productName"],
+        stokNumarasi: json["orderId"],
+        orderList: List<OrderListModel>.from(
+            json["orderList"].map((x) => OrderListModel.fromJson(x))),
       );
 
   Map<String, dynamic> toJson() => {
-        "lineId": lineId,
-        "quantity": quantity,
+        "lineId": id,
+        "quantity": adet,
         "productCode": productCode,
         "amount": amount,
         "price": price,
         "barcode": barcode,
-        "productName": productName,
-        "orderId": orderId,
+        "productName": ad,
+        "orderId": stokNumarasi,
         "orderList": List<dynamic>.from(orderList.map((x) => x.toJson())),
       };
+}
+
+class OrderListModel {
+    int id;
+    String durum;
+    int talepEdilenAdet;
+    int tarihSaat;
+    String stokAdeti;
+
+    OrderListModel({
+        required this.id,
+        required this.durum,
+        required this.talepEdilenAdet,
+        required this.tarihSaat,
+        required this.stokAdeti,
+    });
+
+    factory OrderListModel.fromJson(Map<String, dynamic> json) => OrderListModel(
+        id: json["id"],
+        durum: json["status"],
+        talepEdilenAdet: json["stockCount"],
+        tarihSaat: json["orderDate"],
+        stokAdeti: json["orderNumber"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "id": id,
+        "status": durum,
+        "stockCount": talepEdilenAdet,
+        "orderDate": tarihSaat,
+        "orderNumber": stokAdeti,
+    };
 }
 
 Future<List<UrunModel>> UrunGetir() async {
@@ -120,5 +137,51 @@ Future<List<UrunModel>> UrunGetir() async {
   } catch (e) {
     print('Hata: $e');
     return [];
+  }
+}
+
+
+
+
+Future<bool> SiparisGonder(int urunId, int siparisKalemiId,int miktar,bool onayla) async {
+  var url = Uri.parse(Ctanim.ip);
+  var headers = {
+    'Content-Type': 'text/xml; charset=utf-8',
+    'SOAPAction': 'http://tempuri.org/TrendYolSiparisDurumGuncelle'
+  };
+  String status = onayla ? 'Picking' : 'Invoiced';
+  var body = """<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Header>
+    <AuthHeader xmlns="http://tempuri.org/">
+      <ApiKey>${Ctanim.sessionKey}</ApiKey>
+    </AuthHeader>
+  </soap:Header>
+  <soap:Body>
+    <TrendYolSiparisDurumGuncelle xmlns="http://tempuri.org/">
+      <Status>$status</Status>
+      <Id>${siparisKalemiId}</Id>
+      <lineId>${urunId}</lineId>
+      <Miktar>${miktar}</Miktar>
+    </TrendYolSiparisDurumGuncelle>
+  </soap:Body>
+</soap:Envelope>""";
+
+  try {
+    var response = await http.post(
+      url,
+      headers: headers,
+      body: body,
+    );
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      print('SOAP isteği başarısız: ${response.statusCode}');
+      return false;
+    }
+  } catch (e) {
+    print('Hata: $e');
+    return false;
   }
 }

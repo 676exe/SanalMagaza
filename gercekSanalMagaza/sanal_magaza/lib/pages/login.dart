@@ -54,9 +54,6 @@ class _LoginState extends State<Login> {
                     donenAPIler = await makeSoapRequest(lisans.text);
                     if (donenAPIler.length > 1) {
                       await shared.ipKaydet(donenAPIler[1]);
-                      //
-                      var test = await UrunGetir();
-                      //
                       Navigator.push(
                           context,
                           MaterialPageRoute(

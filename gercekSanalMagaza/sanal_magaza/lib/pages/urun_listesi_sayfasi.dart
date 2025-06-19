@@ -16,13 +16,14 @@ class UrunListesiSayfasi extends StatefulWidget {
 
 class _UrunListesiSayfasiState extends State<UrunListesiSayfasi> {
   final UrunServisi _urunServisi = UrunServisi();
-  List<Urun> _urunler = [];
-  Map<String, bool> _seciliUrunler = {};
+  List<UrunModel> _urunler = [];
+  Map<int, bool> _seciliUrunler = {};
   String _aramaMetni = '';
   StokFiltreSecenekleri _seciliStokFiltre = StokFiltreSecenekleri.hepsi;
   bool _yukleniyor = false;
 
-  Set<String> get _seciliUrunIdleri => _seciliUrunler.keys.where((id) => _seciliUrunler[id] == true).toSet();
+  Set<int> get _seciliUrunIdleri =>
+      _seciliUrunler.keys.where((id) => _seciliUrunler[id] == true).toSet();
   bool get _herhangiUrunSeciliMi => _seciliUrunIdleri.isNotEmpty;
 
   @override
@@ -30,16 +31,15 @@ class _UrunListesiSayfasiState extends State<UrunListesiSayfasi> {
     super.initState();
     _urunleriGetirVeFiltrele();
   }
-
+  
+  
   Future<void> _urunleriGetirVeFiltrele() async {
-    setState(() {
-      _yukleniyor = true;
-      _urunler = [];
-    });
-
+    _yukleniyor = true;
+    _urunler = [];
     try {
       int? minAdet;
       int? maxAdet;
+      _urunler = await _urunServisi.tumUrunleriGetir();
 
       switch (_seciliStokFiltre) {
         case StokFiltreSecenekleri.azStoklu:
@@ -60,8 +60,8 @@ class _UrunListesiSayfasiState extends State<UrunListesiSayfasi> {
 
       setState(() {
         _urunler = filtrelenmisUrunler;
-        
-        Map<String, bool> yeniSeciliDurum = {};
+
+        Map<int, bool> yeniSeciliDurum = {};
         for (var urun in filtrelenmisUrunler) {
           yeniSeciliDurum[urun.id] = _seciliUrunler[urun.id] ?? false;
         }
@@ -69,7 +69,8 @@ class _UrunListesiSayfasiState extends State<UrunListesiSayfasi> {
         _yukleniyor = false;
       });
     } catch (e) {
-      print('HATA: Ürünler getirilirken veya filtrelenirken bir hata oluştu: $e');
+      print(
+          'HATA: Ürünler getirilirken veya filtrelenirken bir hata oluştu: $e');
       setState(() {
         _yukleniyor = false;
       });
@@ -78,7 +79,7 @@ class _UrunListesiSayfasiState extends State<UrunListesiSayfasi> {
       );
     }
   }
-
+  
   void _aramaMetniDegisti(String aramaMetni) {
     setState(() {
       _aramaMetni = aramaMetni;
@@ -95,28 +96,19 @@ class _UrunListesiSayfasiState extends State<UrunListesiSayfasi> {
     }
   }
 
-  void _urunSecimiDegisti(String urunId, bool? seciliMi) {
-    setState(() {
-      _seciliUrunler[urunId] = seciliMi ?? false;
-    });
-  }
-
-  void _gitButonunaBasildi() async { 
-    final List<Urun> gonderilecekUrunler = _urunler
-        .where((urun) => _seciliUrunler[urun.id] == true)
-        .toList();
+  void _gitButonunaBasildi() async {
+    final List<UrunModel> gonderilecekUrunler =
+        _urunler.where((urun) => _seciliUrunler[urun.id] == true).toList();
 
     if (gonderilecekUrunler.isNotEmpty) {
-      
       final result = await Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => UrunYonetimSayfasi(seciliUrunler: gonderilecekUrunler),
+          builder: (context) =>
+              UrunYonetimSayfasi(seciliUrunler: gonderilecekUrunler),
         ),
       );
 
-      
-      
       if (result == true) {
         _urunleriGetirVeFiltrele();
       }
@@ -144,7 +136,7 @@ class _UrunListesiSayfasiState extends State<UrunListesiSayfasi> {
       const SnackBar(content: Text('Düzenleme özelliği entegre edilecek.')),
     );
   }
-
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -168,7 +160,8 @@ class _UrunListesiSayfasiState extends State<UrunListesiSayfasi> {
                         child: Text(
                           '${_aramaMetni.isNotEmpty || _seciliStokFiltre != StokFiltreSecenekleri.hepsi ? "Aradığınız kriterlere uygun ürün bulunamadı." : "Henüz ürün bulunmamaktadır."}',
                           textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                          style:
+                              TextStyle(fontSize: 16, color: Colors.grey[600]),
                         ),
                       )
                     : ListView.builder(
@@ -179,7 +172,9 @@ class _UrunListesiSayfasiState extends State<UrunListesiSayfasi> {
                             urun: urun,
                             seciliMi: _seciliUrunler[urun.id] ?? false,
                             onTiklandi: (bool? seciliMi) {
-                              _urunSecimiDegisti(urun.id, seciliMi);
+                              setState(() {
+                                _seciliUrunler[urun.id] = seciliMi ?? false;
+                              });
                             },
                           );
                         },
@@ -190,7 +185,9 @@ class _UrunListesiSayfasiState extends State<UrunListesiSayfasi> {
             child: ElevatedButton(
               onPressed: _herhangiUrunSeciliMi ? _gitButonunaBasildi : null,
               style: ElevatedButton.styleFrom(
-                backgroundColor: _herhangiUrunSeciliMi ? Theme.of(context).primaryColor : Colors.grey,
+                backgroundColor: _herhangiUrunSeciliMi
+                    ? Theme.of(context).primaryColor
+                    : Colors.grey,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
                 minimumSize: const Size(double.infinity, 50),
