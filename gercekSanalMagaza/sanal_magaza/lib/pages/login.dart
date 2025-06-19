@@ -5,35 +5,30 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
 import 'package:sanal_magaza/controller/Ctanim.dart';
-import 'package:sanal_magaza/models/urun_model.dart';
-import 'package:sanal_magaza/pages/urun_detay_sayfasi.dart';
 import 'package:sanal_magaza/controller/sharedDB.dart';
 import 'package:sanal_magaza/pages/urun_listesi_sayfasi.dart';
-import 'package:sanal_magaza/trash/sharedPreferences.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:xml/xml.dart' as xml;
-import '../trash/base.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
   @override
   State<Login> createState() => _LoginState();
 }
+SharedDB shared = SharedDB();
+
 
 class _LoginState extends State<Login> {
   Future<void> clearAllPreferences() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
     final storage = FlutterSecureStorage();
-    await storage.readAll();
-    await prefs.clear();
+    await storage.deleteAll();
     print("Tüm SharedPreferences verileri silindi");
   }
-
+  
   List<String> donenAPIler = [];
 
   TextEditingController lisans = TextEditingController();
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -44,17 +39,15 @@ class _LoginState extends State<Login> {
             suffixIcon: IconButton(
                 icon: Icon(Icons.search),
                 onPressed: () async {
-                  SharedDB shared = SharedDB();
+                  clearAllPreferences();
+
                   String kullanici =
                       await kullaniciSayisiSorgula(LisansNo: lisans.text);
-                  clearAllPreferences();
-                  await lisansNumarasiKaydet(lisans.text);
                   if (kullanici == "OK") {
-                    await shared.ipSil();
                     donenAPIler = await makeSoapRequest(lisans.text);
                     if (donenAPIler.length > 1) {
                       await shared.ipKaydet(donenAPIler[1]);
-                      Navigator.push(
+                      Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
                             builder: (context) => UrunListesiSayfasi(),
@@ -76,6 +69,7 @@ Future<String?> _getId() async {
     var androidDeviceInfo = await deviceInfo.androidInfo;
     return androidDeviceInfo.id;
   }
+  return null;
 }
 
 Future<String> kullaniciSayisiSorgula({
@@ -157,7 +151,6 @@ Future<List<String>> makeSoapRequest(String lisansNumarasi) async {
     );
 
     if (response.statusCode == 200) {
-      var rawXmlResponse = response.body;
       var tt = parseSoapResponse(response.body);
       return tt;
     } else {
@@ -183,9 +176,4 @@ List<String> parseSoapResponse(String soapResponse) {
   var result = response.findElements('GetirAPKServisIPResult').single;
   List<String> donecek = result.text.split("|");
   return donecek;
-}
-
-Future<void> lisansNumarasiKaydet(String lisans) async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  await prefs.setString('lisansNo', lisans);
 }

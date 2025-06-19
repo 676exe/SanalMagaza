@@ -18,7 +18,7 @@ class UrunYonetimSayfasi extends StatefulWidget {
 
 class _UrunYonetimSayfasiState extends State<UrunYonetimSayfasi> {
   final UrunServisi _urunServisi = UrunServisi();
-  
+
   Map<int, List<OrderListModel>> _urunTrendyolSiparisleri = {};
   bool _yukleniyor = true;
 
@@ -51,49 +51,54 @@ class _UrunYonetimSayfasiState extends State<UrunYonetimSayfasi> {
     }
   }
 
-  
-  Future<void> _eslestirSiparisKalemi(int urunId, int siparisKalemiId,int miktar, bool onayla) async {
-    final success = await SiparisGonder(urunId, siparisKalemiId,miktar,onayla);
+  Future<bool> _eslestirSiparisKalemi(
+      int urunId, int siparisKalemiId, int miktar, bool onayla) async {
+    final success =
+        await SiparisGonder(urunId, siparisKalemiId, miktar, onayla);
     if (success) {
-      await _trendyolSiparisleriniYukle(); 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sipariş başarıyla eşleştirildi! Stok güncellendi.')),
+        const SnackBar(
+            content: Text('Sipariş başarıyla eşleştirildi! Stok güncellendi.'),
+            duration: Duration(milliseconds: 1000)),
       );
+      return true;
     } else {
-      
-      await _trendyolSiparisleriniYukle(); 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Eşleştirme Başarısız: Stok yetersiz veya sipariş zaten işlenmiş.')),
+        const SnackBar(
+            content: Text(
+                'Eşleştirme Başarısız: Stok yetersiz veya sipariş zaten işlenmiş.'),
+            duration: Duration(milliseconds: 100)),
       );
+      return false;
     }
   }
 
-  
   Future<void> _iptalEtSiparisKalemi(int urunId, int siparisKalemiId) async {
-    await _urunServisi.iptalEtSiparisKalemi(urunId, siparisKalemiId);
-    await _trendyolSiparisleriniYukle(); 
+    final success =
+        await _urunServisi.iptalEtSiparisKalemi(urunId, siparisKalemiId);
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Sipariş iptal edildi.')),
+      const SnackBar(
+          content: Text('Sipariş iptal edildi.'),
+          duration: Duration(milliseconds: 100)),
     );
+    setState(() {});
   }
 
-  
   Future<void> _tumunuEsle(int urunId) async {
     final siparisler = _urunTrendyolSiparisleri[urunId];
     if (siparisler != null) {
       for (var siparisKalemi in siparisler) {
-        if (siparisKalemi.durum == 'Bekliyor') { 
-          //await _eslestirSiparisKalemi(urunId, siparisKalemi.id, true);
-        }
+        if (siparisKalemi.durum == 'Bekliyor') {}
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${urunId} için tüm bekleyen siparişler eşleştirilmeye çalışıldı.')),
+        SnackBar(
+            content: Text(
+                '${urunId} için tüm bekleyen siparişler eşleştirilmeye çalışıldı.')),
       );
-      await _trendyolSiparisleriniYukle(); 
+      setState(() {});
     }
   }
 
-  
   bool _hasPendingSiparisKalemleri(int urunId) {
     final siparisler = _urunTrendyolSiparisleri[urunId];
     if (siparisler == null || siparisler.isEmpty) {
@@ -102,26 +107,24 @@ class _UrunYonetimSayfasiState extends State<UrunYonetimSayfasi> {
     return siparisler.any((siparisKalemi) => siparisKalemi.durum == 'Bekliyor');
   }
 
-  
   Color _getDurumRengi(String durum) {
     switch (durum) {
-      case 'Bekliyor':
-        return Colors.blue.shade50; 
+      case 'ReadyToShip':
+        return Colors.blue.shade50;
       case 'Eşleştirildi':
-        return Colors.green.shade50; 
+        return Colors.green.shade50;
       case 'İptal Edildi':
-        return Colors.red.shade50; 
+        return Colors.red.shade50;
       case 'Stok Yetersiz':
-        return Colors.orange.shade50; 
+        return Colors.orange.shade50;
       default:
         return Colors.grey.shade50;
     }
   }
 
-  
   Color _getDurumYaziRengi(String durum) {
     switch (durum) {
-      case 'Bekliyor':
+      case 'ReadyToShip':
         return Colors.blue.shade800;
       case 'Eşleştirildi':
         return Colors.green.shade800;
@@ -133,13 +136,12 @@ class _UrunYonetimSayfasiState extends State<UrunYonetimSayfasi> {
         return Colors.grey.shade800;
     }
   }
+
   @override
   Widget build(BuildContext context) {
-    
-
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Trendyol Sipariş Yönetimi'), 
+        title: const Text('Trendyol Sipariş Yönetimi'),
         backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: Colors.white,
       ),
@@ -152,9 +154,9 @@ class _UrunYonetimSayfasiState extends State<UrunYonetimSayfasi> {
                   itemCount: widget.seciliUrunler.length,
                   itemBuilder: (context, index) {
                     final urun = widget.seciliUrunler[index];
-                    final siparisKalemleri = _urunTrendyolSiparisleri[urun.id] ?? [];
+                    final siparisKalemleri =
+                        _urunTrendyolSiparisleri[urun.id] ?? [];
 
-                    
                     return Card(
                       margin: const EdgeInsets.only(bottom: 16.0),
                       elevation: 4.0,
@@ -177,25 +179,29 @@ class _UrunYonetimSayfasiState extends State<UrunYonetimSayfasi> {
                             const SizedBox(height: 6),
                             Text(
                               'Barkod: ${urun.stokNumarasi}',
-                              style: TextStyle(fontSize: 15, color: Colors.grey[700]),
+                              style: TextStyle(
+                                  fontSize: 15, color: Colors.grey[700]),
                             ),
                             Text(
-                              'Depodaki Ürün Adeti: ${urun.adet}', 
-                              style: TextStyle(fontSize: 15, color: Colors.grey[700]),
+                              'Depodaki Ürün Adeti: ${urun.adet}',
+                              style: TextStyle(
+                                  fontSize: 15, color: Colors.grey[700]),
                             ),
                             const SizedBox(height: 16),
                             Align(
                               alignment: Alignment.centerRight,
                               child: ElevatedButton(
-                                onPressed: _hasPendingSiparisKalemleri(urun.id) 
+                                onPressed: _hasPendingSiparisKalemleri(urun.id)
                                     ? () => _tumunuEsle(urun.id)
                                     : null,
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: _hasPendingSiparisKalemleri(urun.id)
-                                      ? Theme.of(context).primaryColor
-                                      : Colors.grey, 
+                                  backgroundColor:
+                                      _hasPendingSiparisKalemleri(urun.id)
+                                          ? Theme.of(context).primaryColor
+                                          : Colors.grey,
                                   foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 20, vertical: 10),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8.0),
                                   ),
@@ -208,7 +214,6 @@ class _UrunYonetimSayfasiState extends State<UrunYonetimSayfasi> {
                               ),
                             ),
                             const SizedBox(height: 16),
-                            
                             if (siparisKalemleri.isEmpty)
                               const Center(
                                 child: Padding(
@@ -221,43 +226,53 @@ class _UrunYonetimSayfasiState extends State<UrunYonetimSayfasi> {
                               )
                             else
                               ...siparisKalemleri.map((siparisKalemi) {
-                                
-                                final bool isActive = siparisKalemi.durum == 'ReadyToShip';
+                                final bool isActive =
+                                    siparisKalemi.durum == 'ReadyToShip';
 
                                 return Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 6.0),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 6.0),
                                   child: Container(
                                     decoration: BoxDecoration(
-                                      color: _getDurumRengi(siparisKalemi.durum), 
+                                      color:
+                                          _getDurumRengi(siparisKalemi.durum),
                                       borderRadius: BorderRadius.circular(8.0),
-                                      border: Border.all(color: Colors.grey.shade300, width: 0.8),
+                                      border: Border.all(
+                                          color: Colors.grey.shade300,
+                                          width: 0.8),
                                     ),
-                                    padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12.0, vertical: 10.0),
                                     child: Row(
                                       children: [
-                                        
                                         Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 8, vertical: 4),
                                           decoration: BoxDecoration(
-                                            color: _getDurumYaziRengi(siparisKalemi.durum).withOpacity(0.15),
-                                            borderRadius: BorderRadius.circular(4.0),
+                                            color: _getDurumYaziRengi(
+                                                    siparisKalemi.durum)
+                                                .withOpacity(0.15),
+                                            borderRadius:
+                                                BorderRadius.circular(4.0),
                                           ),
                                           child: Text(
                                             siparisKalemi.durum,
                                             style: TextStyle(
                                               fontSize: 13,
                                               fontWeight: FontWeight.w600,
-                                              color: _getDurumYaziRengi(siparisKalemi.durum),
+                                              color: _getDurumYaziRengi(
+                                                  siparisKalemi.durum),
                                             ),
                                           ),
                                         ),
                                         const SizedBox(width: 12),
                                         Expanded(
                                           child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
                                               Text(
-                                                '', 
+                                                '',
                                                 style: const TextStyle(
                                                   fontWeight: FontWeight.bold,
                                                   fontSize: 16,
@@ -265,43 +280,68 @@ class _UrunYonetimSayfasiState extends State<UrunYonetimSayfasi> {
                                                 ),
                                               ),
                                               Text(
-                                                '${siparisKalemi.talepEdilenAdet} adet', 
-                                                style: const TextStyle(fontSize: 14, color: Colors.black54),
+                                                '${siparisKalemi.talepEdilenAdet} adet',
+                                                style: const TextStyle(
+                                                    fontSize: 14,
+                                                    color: Colors.black54),
                                               ),
                                               Text(
-                                                siparisKalemi.tarihSaat.toString(),
-                                                style: const TextStyle(fontSize: 12, color: Colors.black45),
+                                                siparisKalemi.tarihSaat
+                                                    .toString(),
+                                                style: const TextStyle(
+                                                    fontSize: 12,
+                                                    color: Colors.black45),
                                               ),
                                             ],
                                           ),
                                         ),
                                         const SizedBox(width: 12),
-                                        
                                         IconButton(
                                           icon: Icon(
-                                            siparisKalemi.durum == 'Eşleştirildi'
-                                                ? Icons.check_circle 
-                                                : Icons.check_circle_outline, 
-                                            color: isActive ? Colors.green[700] : Colors.grey, 
+                                            siparisKalemi.durum ==
+                                                    'Eşleştirildi'
+                                                ? Icons.check_circle
+                                                : Icons.check_circle_outline,
+                                            color: isActive
+                                                ? Colors.green[700]
+                                                : Colors.grey,
                                             size: 28,
                                           ),
                                           onPressed: isActive
-                                              ? () => _eslestirSiparisKalemi(urun.id, siparisKalemi.id,int.parse( siparisKalemi.talepEdilenAdet.toString()), true)
-                                              : null, 
+                                              ? () async {
+                                                  var succes =
+                                                      await _eslestirSiparisKalemi(
+                                                          urun.id,
+                                                          siparisKalemi.id,
+                                                          int.parse(siparisKalemi
+                                                              .talepEdilenAdet
+                                                              .toString()),
+                                                          true);
+                                                  if(succes){
+                                                    siparisKalemi.durum = "Eşleştirildi";
+                                                    setState(() {
+                                                      
+                                                    });
+                                                  }
+                                                }
+                                              : null,
                                           tooltip: 'Eşleştir',
                                         ),
-                                        
                                         IconButton(
                                           icon: Icon(
-                                            siparisKalemi.durum == 'İptal Edildi'
-                                                ? Icons.cancel 
-                                                : Icons.cancel_outlined, 
-                                            color: isActive ? Colors.red[700] : Colors.grey, 
+                                            siparisKalemi.durum ==
+                                                    'İptal Edildi'
+                                                ? Icons.cancel
+                                                : Icons.cancel_outlined,
+                                            color: isActive
+                                                ? Colors.red[700]
+                                                : Colors.grey,
                                             size: 28,
                                           ),
                                           onPressed: isActive
-                                              ? () => _iptalEtSiparisKalemi(urun.id, siparisKalemi.id)
-                                              : null, 
+                                              ? () => _iptalEtSiparisKalemi(
+                                                  urun.id, siparisKalemi.id)
+                                              : null,
                                           tooltip: 'İptal Et',
                                         ),
                                       ],
@@ -320,7 +360,9 @@ class _UrunYonetimSayfasiState extends State<UrunYonetimSayfasi> {
         child: ElevatedButton(
           onPressed: () {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Sayfa kapatılıyor. Tüm işlemler kayıt edildi.')),
+              const SnackBar(
+                  content:
+                      Text('Sayfa kapatılıyor. Tüm işlemler kayıt edildi.')),
             );
             Navigator.pop(context, true);
           },

@@ -7,36 +7,32 @@ class SharedDB {
     FlutterSecureStorage storage =  const FlutterSecureStorage();
 
   Future<void> ipKaydet(String ip) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
     Ctanim.ip = ip;
-    await prefs.setString('ip', ip);
-    print('$Ctanim.ip');
+    await storage.write(key: "ip",value: ip);
   }
 
   Future<String> ipGetir() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? ip = prefs.getString('ip');
+    var ip = await storage.read(key: "ip");
     if (ip != null) {
       Ctanim.ip = ip;
+
+      await sessionKeyGetir();
+
       return ip;
     } else {
+      Ctanim.ip = "";
       return "";
     }
   }
 
-  Future<void> ipSil() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.remove('ip');
-  }
-
   Future<void> sessionKeyKaydet(String value) async{
-    storage.write(key: "api_key", value: value);
-  }
-  Future<void> sessionKeySil(String key) async{
-    storage.delete(key: "api_key");
+    await storage.write(key: "api_key", value: value);
+    Ctanim.sessionKey = value;
   }
   Future<String> sessionKeyGetir() async{
     String apikey =  await storage.read(key: "api_key") ?? "";
+    Ctanim.sessionKey = apikey;
+
     return apikey;
   }
 }

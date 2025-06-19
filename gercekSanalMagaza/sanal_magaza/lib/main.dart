@@ -15,7 +15,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context){
-    SharedDB shared = SharedDB();
+    
     return MaterialApp(
       title: 'Ürün Yönetim Sistemi',
       debugShowCheckedModeBanner: false,
@@ -46,8 +46,22 @@ class MyApp extends StatelessWidget {
           ),
         ),
         
+        
       ),
-      home:  const Login(),
+      home: FutureBuilder<String>(
+          future: SharedDB().ipGetir(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+            } else if (snapshot.hasData && snapshot.data!.isNotEmpty ) {
+          return const UrunListesiSayfasi();
+            } else {
+          return const Login();
+            }
+          },
+        ),
     );
   }
 }
