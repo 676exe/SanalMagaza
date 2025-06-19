@@ -1,8 +1,14 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:sanal_magaza/controller/Ctanim.dart';
 import 'package:sanal_magaza/models/urun_model.dart';
 import 'package:sanal_magaza/models/siparis_kalemi.dart';
 import 'package:sanal_magaza/services/urun_servisi.dart';
+import 'package:http/http.dart' as http;
+import 'package:xml/xml.dart' as xml;
+
 
 class UrunYonetimSayfasi extends StatefulWidget {
   final List<UrunModel> seciliUrunler;
@@ -20,6 +26,8 @@ class _UrunYonetimSayfasiState extends State<UrunYonetimSayfasi> {
   final UrunServisi _urunServisi = UrunServisi();
 
   Map<int, List<OrderListModel>> _urunTrendyolSiparisleri = {};
+    Map<int, String> _urunResimleri = {};
+
   bool _yukleniyor = true;
 
   @override
@@ -31,12 +39,17 @@ class _UrunYonetimSayfasiState extends State<UrunYonetimSayfasi> {
   Future<void> _trendyolSiparisleriniYukle() async {
     setState(() {
       _yukleniyor = true;
+      
     });
     try {
       for (var urun in widget.seciliUrunler) {
+        final resim = await getirTrendYolStokResim(urun.barcode, Ctanim.sessionKey);
+
         final siparisler = urun.orderList;
         setState(() {
           _urunTrendyolSiparisleri[urun.id] = siparisler;
+          _urunResimleri[urun.id] = resim ?? '';
+
         });
       }
     } catch (e) {
@@ -47,6 +60,7 @@ class _UrunYonetimSayfasiState extends State<UrunYonetimSayfasi> {
     } finally {
       setState(() {
         _yukleniyor = false;
+        
       });
     }
   }
@@ -137,6 +151,48 @@ class _UrunYonetimSayfasiState extends State<UrunYonetimSayfasi> {
     }
   }
 
+  
+  Future<String?> getirTrendYolStokResim(String barcode, String sessionKey) async {
+  final url = Uri.parse(Ctanim.ip);
+  final headers = {
+    'Content-Type': 'text/xml; charset=utf-8',
+    'SOAPAction': 'http://tempuri.org/GetirTrendYolStokResim',
+  };
+
+  final body = '''<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+               xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Header>
+    <AuthHeader xmlns="http://tempuri.org/">
+      <ApiKey>${Ctanim.sessionKey}</ApiKey>
+    </AuthHeader>
+  </soap:Header>
+  <soap:Body>
+    <GetirTrendYolStokResim xmlns="http://tempuri.org/">
+      <Barcode>$barcode</Barcode>
+    </GetirTrendYolStokResim>
+  </soap:Body>
+</soap:Envelope>''';
+
+  try {
+    final response = await http.post(url, headers: headers, body: body);
+    if (response.statusCode == 200) {
+      final document = xml.XmlDocument.parse(response.body);
+      final jsonStr = document.findAllElements('GetirTrendYolStokResimResult').first.text;
+
+      final List<dynamic> jsonList = json.decode(jsonStr);
+      final imageUrl = jsonList.first["Images"][0]["Url"];
+      return imageUrl;
+    }
+  } catch (e) {
+    print("Resim getirme hatası: $e");
+  }
+
+  return null;
+}
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -156,6 +212,8 @@ class _UrunYonetimSayfasiState extends State<UrunYonetimSayfasi> {
                     final urun = widget.seciliUrunler[index];
                     final siparisKalemleri =
                         _urunTrendyolSiparisleri[urun.id] ?? [];
+                                            final resim = _urunResimleri[urun.id];
+
 
                     return Card(
                       margin: const EdgeInsets.only(bottom: 16.0),
@@ -168,6 +226,13 @@ class _UrunYonetimSayfasiState extends State<UrunYonetimSayfasi> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                             if (resim != null && resim.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 8.0),
+                                child: resim.startsWith('http')
+                                    ? Image.network(resim, height: 160, fit: BoxFit.contain)
+                                    : Image.memory(base64Decode(resim), height: 160, fit: BoxFit.contain),
+                              ),
                             Text(
                               urun.ad,
                               style: const TextStyle(

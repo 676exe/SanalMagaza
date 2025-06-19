@@ -31,12 +31,12 @@ class UstMenu extends StatelessWidget implements PreferredSizeWidget {
           tooltip: 'Barkod Okut',
         ),
         IconButton(
-          icon: const Icon(Icons.print_outlined, size: 28), 
+          icon: const Icon(Icons.exit_to_app, size: 28), 
           onPressed: onYazdir,
           tooltip: 'Yazdır',
         ),
         IconButton(
-          icon: const Icon(Icons.edit_outlined, size: 28), 
+          icon: const Icon(Icons.refresh, size: 28), 
           onPressed: onDuzenle,
           tooltip: 'Düzenle',
         ),
