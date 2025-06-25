@@ -1,6 +1,5 @@
 
-import 'package:sanal_magaza/models/urun_model.dart';
-import 'package:sanal_magaza/models/siparis_kalemi.dart';
+import 'package:SanalMagaza/models/urun_model.dart';
 
 class UrunServisi {
   static List<UrunModel> _urunler = [

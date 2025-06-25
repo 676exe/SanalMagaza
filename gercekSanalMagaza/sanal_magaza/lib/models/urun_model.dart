@@ -1,8 +1,6 @@
 import 'dart:convert';
-
-import 'package:sanal_magaza/controller/Ctanim.dart';
-import 'package:sanal_magaza/models/siparis_kalemi.dart';
-import 'package:sanal_magaza/pages/login.dart';
+import 'package:SanalMagaza/controller/Ctanim.dart';
+import 'package:SanalMagaza/models/guncelleHataModel.dart';
 import 'package:xml/xml.dart' as xml;
 import 'package:http/http.dart' as http;
 
@@ -17,7 +15,7 @@ String urunModelToJson(List<UrunModel> data) =>
 class UrunModel {
   int id;
   int adet;
-  int productCode;
+  String productCode;
   double amount;
   double price;
   String barcode;
@@ -143,7 +141,7 @@ Future<List<UrunModel>> UrunGetir() async {
 
 
 
-Future<bool> SiparisGonder(int urunId, int siparisKalemiId,int miktar,bool onayla) async {
+Future<String> SiparisGonder(int siparisKalemiId, String  kod,int miktar,bool onayla) async {
   var url = Uri.parse(Ctanim.ip);
   var headers = {
     'Content-Type': 'text/xml; charset=utf-8',
@@ -160,9 +158,9 @@ Future<bool> SiparisGonder(int urunId, int siparisKalemiId,int miktar,bool onayl
   <soap:Body>
     <TrendYolSiparisDurumGuncelle xmlns="http://tempuri.org/">
       <Status>$status</Status>
-      <Id>${siparisKalemiId}</Id>
-      <lineId>${urunId}</lineId>
-      <Miktar>${miktar}</Miktar>
+      <Kod>$kod</Kod>
+      <Id>$siparisKalemiId</Id>
+      <Miktar>$miktar</Miktar>
     </TrendYolSiparisDurumGuncelle>
   </soap:Body>
 </soap:Envelope>""";
@@ -175,13 +173,22 @@ Future<bool> SiparisGonder(int urunId, int siparisKalemiId,int miktar,bool onayl
     );
 
     if (response.statusCode == 200) {
-      return true;
+       var rawXmlResponse = response.body;
+      xml.XmlDocument parsedXml = xml.XmlDocument.parse(rawXmlResponse);
+      final kontrolKarakterleri = RegExp(r'[\x00-\x1F\x7F]');
+      String jsonData = parsedXml.innerText.replaceAll(kontrolKarakterleri, '');
+      var hata = guncelleHataModelFromJson(jsonData);
+      print(jsonData);
+      if (hata.hataMesaj == "") {
+        return 'Sipariş başarıyla eşleştirildi! Stok güncellendi.';
+      }
+      return hata.hataMesaj;
     } else {
       print('SOAP isteği başarısız: ${response.statusCode}');
-      return false;
+      return 'SOAP isteği başarısız: ${response.statusCode}';
     }
   } catch (e) {
     print('Hata: $e');
-    return false;
+    return 'Hata: $e';
   }
 }

@@ -1,11 +1,10 @@
 import 'dart:convert';
 
+import 'package:SanalMagaza/controller/Ctanim.dart';
+import 'package:SanalMagaza/models/urun_model.dart';
+import 'package:SanalMagaza/services/urun_servisi.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:sanal_magaza/controller/Ctanim.dart';
-import 'package:sanal_magaza/models/urun_model.dart';
-import 'package:sanal_magaza/models/siparis_kalemi.dart';
-import 'package:sanal_magaza/services/urun_servisi.dart';
 import 'package:http/http.dart' as http;
 import 'package:xml/xml.dart' as xml;
 
@@ -66,22 +65,21 @@ class _UrunYonetimSayfasiState extends State<UrunYonetimSayfasi> {
   }
 
   Future<bool> _eslestirSiparisKalemi(
-      int urunId, int siparisKalemiId, int miktar, bool onayla) async {
-    final success =
-        await SiparisGonder(urunId, siparisKalemiId, miktar, onayla);
-    if (success) {
+      int siparisKalemiId, String kod, int miktar, bool onayla) async {
+    final response =
+        await SiparisGonder(siparisKalemiId, kod , miktar, onayla);
+    if (response == 'Sipariş başarıyla eşleştirildi! Stok güncellendi.') {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Sipariş başarıyla eşleştirildi! Stok güncellendi.'),
-            duration: Duration(milliseconds: 1000)),
+         SnackBar(
+            content: Text(response),),
       );
       return true;
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+         SnackBar(
             content: Text(
-                'Eşleştirme Başarısız: Stok yetersiz veya sipariş zaten işlenmiş.'),
-            duration: Duration(milliseconds: 100)),
+                response),
+            ),
       );
       return false;
     }
@@ -253,31 +251,7 @@ class _UrunYonetimSayfasiState extends State<UrunYonetimSayfasi> {
                                   fontSize: 15, color: Colors.grey[700]),
                             ),
                             const SizedBox(height: 16),
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: ElevatedButton(
-                                onPressed: _hasPendingSiparisKalemleri(urun.id)
-                                    ? () => _tumunuEsle(urun.id)
-                                    : null,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor:
-                                      _hasPendingSiparisKalemleri(urun.id)
-                                          ? Theme.of(context).primaryColor
-                                          : Colors.grey,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 20, vertical: 10),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8.0),
-                                  ),
-                                  elevation: 2.0,
-                                ),
-                                child: const Text(
-                                  'Tümünü Eşleştir',
-                                  style: TextStyle(fontSize: 15),
-                                ),
-                              ),
-                            ),
+                            
                             const SizedBox(height: 16),
                             if (siparisKalemleri.isEmpty)
                               const Center(
@@ -376,14 +350,14 @@ class _UrunYonetimSayfasiState extends State<UrunYonetimSayfasi> {
                                               ? () async {
                                                   var succes =
                                                       await _eslestirSiparisKalemi(
-                                                          urun.id,
                                                           siparisKalemi.id,
+                                                          urun.productCode,
                                                           int.parse(siparisKalemi
                                                               .talepEdilenAdet
                                                               .toString()),
-                                                          true);
+                                                          false);
                                                   if(succes){
-                                                    siparisKalemi.durum = "Eşleştirildi";
+                                                    siparisKalemi.durum = "İptal Edildi";
                                                     setState(() {
                                                       
                                                     });
@@ -403,9 +377,23 @@ class _UrunYonetimSayfasiState extends State<UrunYonetimSayfasi> {
                                                 : Colors.grey,
                                             size: 28,
                                           ),
-                                          onPressed: isActive
-                                              ? () => _iptalEtSiparisKalemi(
-                                                  urun.id, siparisKalemi.id)
+                                          onPressed:isActive
+                                              ? () async {
+                                                  var succes =
+                                                      await _eslestirSiparisKalemi(
+                                                          siparisKalemi.id,
+                                                          urun.productCode,
+                                                          int.parse(siparisKalemi
+                                                              .talepEdilenAdet
+                                                              .toString()),
+                                                          true);
+                                                  if(succes){
+                                                    siparisKalemi.durum = "Eşleştirildi";
+                                                    setState(() {
+                                                      
+                                                    });
+                                                  }
+                                                }
                                               : null,
                                           tooltip: 'İptal Et',
                                         ),

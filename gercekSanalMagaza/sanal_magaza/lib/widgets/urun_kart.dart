@@ -1,6 +1,5 @@
+import 'package:SanalMagaza/models/urun_model.dart';
 import 'package:flutter/material.dart';
-import 'package:sanal_magaza/models/urun_model.dart';
-import 'package:sanal_magaza/controller/Ctanim.dart';
 
 class UrunKart extends StatefulWidget {
   final UrunModel urun;

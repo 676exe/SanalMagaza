@@ -1,10 +1,8 @@
 
+import 'package:SanalMagaza/controller/sharedDB.dart';
+import 'package:SanalMagaza/pages/login.dart';
+import 'package:SanalMagaza/pages/urun_listesi_sayfasi.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:sanal_magaza/controller/Ctanim.dart';
-import 'package:sanal_magaza/pages/login.dart';
-import 'package:sanal_magaza/pages/urun_listesi_sayfasi.dart';
-import 'package:sanal_magaza/controller/sharedDB.dart'; 
 
 void main() {
   runApp(const MyApp());

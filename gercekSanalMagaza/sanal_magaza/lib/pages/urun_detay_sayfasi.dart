@@ -1,5 +1,5 @@
+import 'package:SanalMagaza/models/urun_model.dart';
 import 'package:flutter/material.dart';
-import 'package:sanal_magaza/models/urun_model.dart';
 
 class UrunDetaySayfasi extends StatelessWidget {
   final UrunModel urun;
